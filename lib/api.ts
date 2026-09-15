@@ -1,4 +1,7 @@
 import type { Answer, ReadinessReport, RepoScan, SpecPack } from "./types";
+import { DEMO_READINESS, DEMO_SLUG, DEMO_SPEC_PACK } from "./fixtures";
+
+const delay = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 // Thin client for our own route handlers. Throws Error(message) with the
 // server's sentence-with-a-next-step on failure.
@@ -17,10 +20,17 @@ async function postJson<T>(url: string, body: unknown): Promise<T> {
   return data as T;
 }
 
-export function fetchReadiness(
+export async function fetchReadiness(
   feature: { title: string; text: string },
   repoScan?: RepoScan,
+  demo = false,
 ): Promise<ReadinessReport> {
+  // Demo mode: return a pre-captured real response, no Anthropic call. A short
+  // delay keeps the loading state visible so the demo reads as real work.
+  if (demo) {
+    await delay(1200);
+    return DEMO_READINESS;
+  }
   return postJson<ReadinessReport>("/api/readiness", { feature, repoScan });
 }
 
@@ -40,7 +50,19 @@ export async function streamSpecPack(
     repoScan?: RepoScan;
   },
   handlers: SpecPackStreamHandlers,
+  demo = false,
 ): Promise<void> {
+  // Demo mode: replay a pre-captured pack with simulated streaming progress.
+  if (demo) {
+    const total = DEMO_SPEC_PACK.files.reduce((n, f) => n + f.content.length, 0);
+    for (let i = 1; i <= 6; i++) {
+      await delay(300);
+      handlers.onProgress?.(Math.round((total * i) / 6));
+    }
+    handlers.onDone(DEMO_SPEC_PACK, DEMO_SLUG);
+    return;
+  }
+
   const res = await fetch("/api/spec-pack", {
     method: "POST",
     headers: { "Content-Type": "application/json" },

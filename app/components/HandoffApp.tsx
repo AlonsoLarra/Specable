@@ -26,6 +26,28 @@ export function HandoffApp() {
   const [specError, setSpecError] = useState<string | null>(null);
   const [specProgress, setSpecProgress] = useState(0);
   const [specSlug, setSpecSlug] = useState("feature");
+  const [demoMode, setDemoMode] = useState(false);
+
+  // Demo mode is a per-viewer convenience — persist it in localStorage.
+  useEffect(() => {
+    try {
+      setDemoMode(localStorage.getItem("handoff-demo") === "1");
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  function toggleDemo() {
+    setDemoMode((on) => {
+      const next = !on;
+      try {
+        localStorage.setItem("handoff-demo", next ? "1" : "0");
+      } catch {
+        // ignore
+      }
+      return next;
+    });
+  }
 
   // On reload, resume at the furthest step the restored session reached —
   // once, so it never fights the user's own navigation.
@@ -54,7 +76,7 @@ export function HandoffApp() {
     setLoading(true);
     setError(null);
     try {
-      const report = await fetchReadiness(feature, session.repo?.scan);
+      const report = await fetchReadiness(feature, session.repo?.scan, demoMode);
       // Fresh report — clear any answers tied to the previous run's gap ids.
       update({ readiness: report, answers: [] });
     } catch (e) {
@@ -92,6 +114,7 @@ export function HandoffApp() {
           setSpecLoading(false);
         },
       },
+      demoMode,
     );
   }
 
@@ -99,6 +122,19 @@ export function HandoffApp() {
 
   return (
     <div>
+      <div className="flex justify-end pb-1">
+        <button
+          onClick={toggleDemo}
+          title="Demo mode replays pre-captured responses instead of calling the model."
+          className="text-[13px] text-secondary underline-offset-4 hover:text-foreground"
+        >
+          Demo mode{" "}
+          <span className={demoMode ? "text-accent" : "text-secondary"}>
+            {demoMode ? "on" : "off"}
+          </span>
+        </button>
+      </div>
+
       <FeatureStep
         key={resetNonce}
         active={step === "feature"}
