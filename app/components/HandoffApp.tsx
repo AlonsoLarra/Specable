@@ -1,12 +1,18 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useSession } from "@/lib/session";
 import { fetchReadiness, streamSpecPack } from "@/lib/api";
 import { FeatureStep } from "./FeatureStep";
 import { ReadinessStep } from "./ReadinessStep";
 import { SpecPackStep } from "./SpecPackStep";
-import { StepHeading } from "./ui";
+import { StepHeading, StepSummary } from "./ui";
+
+const VERDICT_TEXT: Record<string, string> = {
+  ready: "ready to hand off",
+  "needs-work": "needs work",
+  "not-ready": "not ready",
+};
 
 type Step = "feature" | "readiness" | "specpack";
 
@@ -20,6 +26,22 @@ export function HandoffApp() {
   const [specError, setSpecError] = useState<string | null>(null);
   const [specProgress, setSpecProgress] = useState(0);
   const [specSlug, setSpecSlug] = useState("feature");
+
+  // On reload, resume at the furthest step the restored session reached —
+  // once, so it never fights the user's own navigation.
+  const resumed = useRef(false);
+  useEffect(() => {
+    if (!hydrated || resumed.current) return;
+    resumed.current = true;
+    if (session.specPack) {
+      setStep("specpack");
+      // Recover the slug from a file path like "specs/<slug>/intent.md".
+      const parts = session.specPack.files[0]?.path.split("/");
+      if (parts && parts.length >= 2) setSpecSlug(parts[parts.length - 2]);
+    } else if (session.readiness) {
+      setStep("readiness");
+    }
+  }, [hydrated, session.specPack, session.readiness]);
 
   // Wait for sessionStorage to hydrate before mounting the steps, so a
   // restored draft doesn't desync from the input's initial state.
@@ -112,6 +134,16 @@ export function HandoffApp() {
             <ReadinessStep report={session.readiness} onGenerate={runSpecPack} />
           )}
         </>
+      )}
+
+      {step === "specpack" && session.readiness && (
+        <StepSummary
+          label="Readiness"
+          value={`Overall ${session.readiness.scores.overall} · ${
+            VERDICT_TEXT[session.readiness.verdict] ?? session.readiness.verdict
+          }`}
+          onEdit={() => setStep("readiness")}
+        />
       )}
 
       {step === "specpack" && (

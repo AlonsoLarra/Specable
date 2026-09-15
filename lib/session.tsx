@@ -37,28 +37,35 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   const loaded = useRef(false);
 
   // Hydrate once on mount. sessionStorage can throw (private mode, blocked
-  // storage) — degrade to an empty session rather than crash.
+  // storage) — degrade to an empty session rather than crash. Guard against a
+  // StrictMode double-invoke re-reading storage after the first pass has run.
   useEffect(() => {
+    if (loaded.current) {
+      setHydrated(true);
+      return;
+    }
+    loaded.current = true;
     try {
       const raw = sessionStorage.getItem(STORAGE_KEY);
       if (raw) setSession({ ...emptySession(), ...JSON.parse(raw) });
     } catch {
       // ignore — start from an empty session
     }
-    loaded.current = true;
     setHydrated(true);
   }, []);
 
-  // Persist on change, but not before the initial load (which would clobber
-  // stored state with the empty default).
+  // Persist on change, but never before hydration completes. Keying on the
+  // `hydrated` STATE (not a ref set synchronously) guarantees this effect first
+  // runs on the post-hydration render — with the loaded session in hand — so it
+  // can't clobber stored data with the empty default.
   useEffect(() => {
-    if (!loaded.current) return;
+    if (!hydrated) return;
     try {
       sessionStorage.setItem(STORAGE_KEY, JSON.stringify(forStorage(session)));
     } catch {
       // ignore — persistence is a convenience, not a requirement
     }
-  }, [session]);
+  }, [session, hydrated]);
 
   const update = useCallback((u: Updater) => {
     setSession((prev) =>
