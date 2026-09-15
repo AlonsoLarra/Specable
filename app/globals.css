@@ -1,0 +1,29 @@
+@import "tailwindcss";
+
+/* Handoff palette — the whole of it (brief §8). No dark mode for the demo. */
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+  --secondary: #6f6f6f;
+  --hairline: #e4e4e4;
+  --accent: #2f5d50; /* deep green: primary button, "ready" state, links */
+  --warning: #9a5b12; /* blocking gaps, unmapped criteria */
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-secondary: var(--secondary);
+  --color-hairline: var(--hairline);
+  --color-accent: var(--accent);
+  --color-warning: var(--warning);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  line-height: 1.6;
+}
