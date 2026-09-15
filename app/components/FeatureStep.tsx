@@ -19,7 +19,7 @@ export function FeatureStep({
   onEdit,
 }: {
   active: boolean;
-  onSubmit: () => void;
+  onSubmit: (feature: { title: string; text: string }) => void;
   onEdit: () => void;
 }) {
   const { session, update } = useSession();
@@ -41,7 +41,7 @@ export function FeatureStep({
   function handleSubmit() {
     const parsed = parseFeatureText(draft);
     update({ feature: parsed });
-    onSubmit();
+    onSubmit(parsed);
   }
 
   return (

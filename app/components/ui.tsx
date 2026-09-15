@@ -56,3 +56,34 @@ export function StepSummary({
 export function StepHeading({ children }: { children: ReactNode }) {
   return <h2 className="text-[18px] font-medium tracking-tight">{children}</h2>;
 }
+
+// A 4px hairline that fills in the accent color — the whole of the "chart" (§8).
+export function ScoreBar({ label, value }: { label: string; value: number }) {
+  const v = Math.max(0, Math.min(100, Math.round(value)));
+  return (
+    <div className="flex items-center gap-3">
+      <span className="w-28 shrink-0 text-[13px] text-secondary">{label}</span>
+      <div className="h-1 flex-1 rounded-full bg-hairline">
+        <div
+          className="h-1 rounded-full bg-accent"
+          style={{ width: `${v}%` }}
+        />
+      </div>
+      <span className="w-7 shrink-0 text-right text-[13px] tabular-nums text-secondary">
+        {v}
+      </span>
+    </div>
+  );
+}
+
+// A small, quiet label — sentence case, no box, no all-caps (§8).
+export function Tag({
+  children,
+  tone = "muted",
+}: {
+  children: ReactNode;
+  tone?: "muted" | "warning";
+}) {
+  const color = tone === "warning" ? "text-warning" : "text-secondary";
+  return <span className={`text-[13px] ${color}`}>{children}</span>;
+}
