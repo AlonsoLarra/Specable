@@ -71,3 +71,56 @@ export const ReadinessReportSchema = z.object({
 });
 
 export type ReadinessReportOut = z.infer<typeof ReadinessReportSchema>;
+
+// --- Spec pack (brief §2.3, §4, §5) ---
+
+export const SpecFileSchema = z.object({
+  path: z
+    .string()
+    .describe(
+      "Repo-relative path, e.g. 'specs/<slug>/intent.md'. Use exactly the five paths given in the instructions.",
+    ),
+  content: z.string().describe("Full Markdown content of the file."),
+});
+
+export const TraceRowSchema = z.object({
+  criterionId: z.string().describe("Acceptance criterion id, e.g. 'AC-1'."),
+  criterionText: z.string().describe("The criterion in one line."),
+  taskIds: z
+    .array(z.string())
+    .describe(
+      "Ids of the tasks that satisfy this criterion, e.g. ['T-1','T-3']. Empty only if genuinely unmapped.",
+    ),
+});
+
+export const TaskEstimateSchema = z.object({
+  taskId: z.string().describe("Task id, e.g. 'T-1'."),
+  filesTouched: z
+    .number()
+    .describe("How many files the agent will read or edit for this task."),
+  avgFileTokens: z
+    .number()
+    .describe("Average tokens per touched file; use 1500 if the repo is unknown."),
+  turns: z
+    .number()
+    .describe("Expected agent loop iterations (read → edit → test), typically 2–6."),
+  outputTokens: z
+    .number()
+    .describe("Tokens of code + explanation the agent will write for this task."),
+});
+
+export const SpecPackSchema = z.object({
+  files: z
+    .array(SpecFileSchema)
+    .describe(
+      "Exactly five files: constitution.md, intent.md, spec.md, plan.md, tasks.md — in that order.",
+    ),
+  trace: z
+    .array(TraceRowSchema)
+    .describe("One row per acceptance criterion, mapping it to the tasks that satisfy it."),
+  taskEstimates: z
+    .array(TaskEstimateSchema)
+    .describe("One estimate per task in tasks.md, used to compute the cost table."),
+});
+
+export type SpecPackOut = z.infer<typeof SpecPackSchema>;

@@ -2,9 +2,10 @@
 
 import { useState } from "react";
 import { useSession } from "@/lib/session";
-import { fetchReadiness } from "@/lib/api";
+import { fetchReadiness, streamSpecPack } from "@/lib/api";
 import { FeatureStep } from "./FeatureStep";
 import { ReadinessStep } from "./ReadinessStep";
+import { SpecPackStep } from "./SpecPackStep";
 import { StepHeading } from "./ui";
 
 type Step = "feature" | "readiness" | "specpack";
@@ -15,6 +16,10 @@ export function HandoffApp() {
   const [resetNonce, setResetNonce] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [specLoading, setSpecLoading] = useState(false);
+  const [specError, setSpecError] = useState<string | null>(null);
+  const [specProgress, setSpecProgress] = useState(0);
+  const [specSlug, setSpecSlug] = useState("feature");
 
   // Wait for sessionStorage to hydrate before mounting the steps, so a
   // restored draft doesn't desync from the input's initial state.
@@ -35,6 +40,37 @@ export function HandoffApp() {
     } finally {
       setLoading(false);
     }
+  }
+
+  async function runSpecPack() {
+    setStep("specpack");
+    setSpecLoading(true);
+    setSpecError(null);
+    setSpecProgress(0);
+    // Use the accepted revised Feature if there is one, else the original.
+    const feature = session.featureRevised ?? session.feature;
+    const gapLabels: Record<
+      string,
+      { question: string; owner: string; pillar: string }
+    > = {};
+    for (const g of session.readiness?.gaps ?? []) {
+      gapLabels[g.id] = { question: g.question, owner: g.owner, pillar: g.pillar };
+    }
+    await streamSpecPack(
+      { feature, answers: session.answers, gapLabels, repoScan: session.repo?.scan },
+      {
+        onProgress: (chars) => setSpecProgress(chars),
+        onDone: (specPack, slug) => {
+          update({ specPack, export: { mode: "files" } });
+          setSpecSlug(slug);
+          setSpecLoading(false);
+        },
+        onError: (message) => {
+          setSpecError(message);
+          setSpecLoading(false);
+        },
+      },
+    );
   }
 
   const hasProgress = step !== "feature" || session.feature.text.length > 0;
@@ -73,26 +109,49 @@ export function HandoffApp() {
           )}
 
           {!loading && !error && session.readiness && (
-            <ReadinessStep
-              report={session.readiness}
-              onGenerate={() => setStep("specpack")}
-            />
+            <ReadinessStep report={session.readiness} onGenerate={runSpecPack} />
           )}
         </>
       )}
 
       {step === "specpack" && (
-        <section className="py-8">
-          <StepHeading>Spec pack</StepHeading>
-          <p className="mt-2 text-[15px] text-secondary">
-            Handoff will generate the five-file spec pack — intent, spec, plan,
-            tasks, and constitution — with a criterion-to-task trace and a token
-            cost estimate.
-          </p>
-          <p className="mt-6 text-[13px] text-secondary">
-            Generation route wiring next.
-          </p>
-        </section>
+        <>
+          {specLoading && (
+            <section className="py-8">
+              <StepHeading>Spec pack</StepHeading>
+              <p className="mt-3 text-[15px] text-secondary">
+                Generating the five-file spec pack…
+                {specProgress > 0
+                  ? ` ${Math.round(specProgress / 1000)}k characters so far.`
+                  : ""}
+              </p>
+            </section>
+          )}
+
+          {!specLoading && specError && (
+            <section className="py-8">
+              <StepHeading>Spec pack</StepHeading>
+              <p className="mt-3 text-[15px] text-warning">{specError}</p>
+              <button
+                onClick={runSpecPack}
+                className="mt-3 text-[13px] text-accent underline-offset-4 hover:underline"
+              >
+                Try again
+              </button>
+            </section>
+          )}
+
+          {!specLoading && !specError && session.specPack && (
+            <SpecPackStep
+              specPack={session.specPack}
+              slug={specSlug}
+              outcome={
+                (session.featureRevised ?? session.feature).title || "This Feature"
+              }
+              onRegenerate={runSpecPack}
+            />
+          )}
+        </>
       )}
 
       {hasProgress && (
@@ -103,6 +162,8 @@ export function HandoffApp() {
               setStep("feature");
               setResetNonce((n) => n + 1);
               setError(null);
+              setSpecError(null);
+              setSpecLoading(false);
             }}
             className="text-[13px] text-secondary underline-offset-4 hover:underline"
           >
