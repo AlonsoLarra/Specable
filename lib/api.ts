@@ -1,5 +1,12 @@
-import type { Answer, ReadinessReport, RepoScan, SpecPack } from "./types";
+import type {
+  Answer,
+  CostEstimate,
+  ReadinessReport,
+  RepoScan,
+  SpecPack,
+} from "./types";
 import { pickDemo } from "./fixtures";
+import { approxContextTokens, computeCostEstimate } from "./cost";
 
 const delay = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
@@ -36,7 +43,7 @@ export async function fetchReadiness(
 
 export type SpecPackStreamHandlers = {
   onProgress?: (chars: number) => void;
-  onDone: (specPack: SpecPack, slug: string) => void;
+  onDone: (specPack: SpecPack, slug: string, cost?: CostEstimate) => void;
   onError: (message: string) => void;
 };
 
@@ -60,7 +67,14 @@ export async function streamSpecPack(
       await delay(300);
       handlers.onProgress?.(Math.round((total * i) / 6));
     }
-    handlers.onDone(sc.specPack, sc.slug);
+    // Offline: approximate the context size rather than calling count_tokens.
+    const cost = computeCostEstimate({
+      taskEstimates: sc.specPack.taskEstimates,
+      contextTokens: approxContextTokens(sc.specPack.files),
+      measuredWithModel: "claude-sonnet-5",
+      avgFileTokensSource: "default",
+    });
+    handlers.onDone(sc.specPack, sc.slug, cost);
     return;
   }
 
@@ -96,6 +110,7 @@ export async function streamSpecPack(
         chars?: number;
         specPack?: SpecPack;
         slug?: string;
+        costEstimate?: CostEstimate;
         error?: string;
       };
       try {
@@ -105,7 +120,7 @@ export async function streamSpecPack(
       }
       if (evt.type === "progress") handlers.onProgress?.(evt.chars ?? 0);
       else if (evt.type === "done" && evt.specPack)
-        handlers.onDone(evt.specPack, evt.slug ?? "feature");
+        handlers.onDone(evt.specPack, evt.slug ?? "feature", evt.costEstimate);
       else if (evt.type === "error")
         handlers.onError(evt.error ?? "Generation failed.");
     }

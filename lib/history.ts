@@ -1,4 +1,10 @@
-import type { Answer, HandoffSession, ReadinessReport, SpecPack } from "./types";
+import type {
+  Answer,
+  CostEstimate,
+  HandoffSession,
+  ReadinessReport,
+  SpecPack,
+} from "./types";
 
 // A saved conversion, so a Feature already turned into a spec pack can be
 // reopened without re-running the analysis. Persisted in localStorage (survives
@@ -14,6 +20,7 @@ export type HistoryEntry = {
   readiness?: ReadinessReport;
   answers: Answer[];
   specPack: SpecPack;
+  costEstimate?: CostEstimate;
   repo?: HandoffSession["repo"];
 };
 

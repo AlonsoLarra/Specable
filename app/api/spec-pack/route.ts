@@ -4,6 +4,7 @@ import { anthropic, MODELS } from "@/lib/anthropic";
 import { SpecPackSchema } from "@/lib/schemas";
 import { SPEC_PACK_SYSTEM, specPackUserContent } from "@/lib/prompts";
 import { packPaths, slugify } from "@/lib/templates";
+import { computeCostEstimate, injectCostIntoPlan } from "@/lib/cost";
 import type { Answer, RepoScan } from "@/lib/types";
 
 export const runtime = "nodejs";
@@ -115,7 +116,36 @@ export async function POST(request: Request) {
           return;
         }
 
-        send({ type: "done", specPack: { mode: "create", ...result.data }, slug });
+        const data = result.data;
+
+        // Cost estimate: measure the real context size with the free
+        // count_tokens endpoint (per the model we'd actually run), then compute
+        // the per-task estimate and inject the measured table into plan.md.
+        let costEstimate = undefined;
+        try {
+          const allFilesText = data.files.map((f) => f.content).join("\n\n");
+          const counted = await anthropic.messages.countTokens({
+            model: MODELS.specPack,
+            messages: [{ role: "user", content: allFilesText }],
+          });
+          costEstimate = computeCostEstimate({
+            taskEstimates: data.taskEstimates,
+            contextTokens: counted.input_tokens,
+            measuredWithModel: MODELS.specPack,
+            avgFileTokensSource: "default",
+          });
+          const plan = data.files.find((f) => f.path.endsWith("plan.md"));
+          if (plan) plan.content = injectCostIntoPlan(plan.content, costEstimate);
+        } catch {
+          // If counting fails, ship the pack without the measured cost table.
+        }
+
+        send({
+          type: "done",
+          specPack: { mode: "create", ...data },
+          slug,
+          costEstimate,
+        });
         controller.close();
       } catch (error) {
         const message =

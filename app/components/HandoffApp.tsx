@@ -118,8 +118,8 @@ export function HandoffApp() {
       { feature, answers: session.answers, gapLabels, repoScan: session.repo?.scan },
       {
         onProgress: (chars) => setSpecProgress(chars),
-        onDone: (specPack, slug) => {
-          update({ specPack, export: { mode: "files" } });
+        onDone: (specPack, slug, cost) => {
+          update({ specPack, costEstimate: cost, export: { mode: "files" } });
           setSpecSlug(slug);
           setSpecLoading(false);
           // Record the conversion so it can be reopened without re-analysis.
@@ -136,6 +136,7 @@ export function HandoffApp() {
               readiness: session.readiness,
               answers: session.answers,
               specPack,
+              costEstimate: cost,
               repo: session.repo,
             }),
           );
@@ -156,6 +157,7 @@ export function HandoffApp() {
       readiness: e.readiness,
       answers: e.answers,
       specPack: e.specPack,
+      costEstimate: e.costEstimate,
       repo: e.repo,
       featureRevised: undefined,
     }));
@@ -276,6 +278,7 @@ export function HandoffApp() {
             <SpecPackStep
               specPack={session.specPack}
               slug={specSlug}
+              cost={session.costEstimate}
               outcome={
                 (session.featureRevised ?? session.feature).title || "This Feature"
               }
