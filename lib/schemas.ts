@@ -124,3 +124,45 @@ export const SpecPackSchema = z.object({
 });
 
 export type SpecPackOut = z.infer<typeof SpecPackSchema>;
+
+// --- Repo scan (brief §2.0) ---
+
+export const RepoScanSchema = z.object({
+  empty: z.boolean().describe("True if the repository has no commits yet."),
+  stack: z
+    .array(z.string())
+    .describe('Detected stack, e.g. ["Next.js 15", "TypeScript", "Supabase"]. Empty if unknown.'),
+  conventions: z
+    .array(z.string())
+    .describe(
+      'Testing, lint, folder layout, commit style — each line ending with "(found)" or "(inferred)".',
+    ),
+  constitution: z.object({
+    source: z.enum(["found", "inferred"]),
+    path: z
+      .string()
+      .describe('Repo path if a constitution file was found, else "".'),
+    markdown: z
+      .string()
+      .describe(
+        "If found: the file content verbatim. If inferred: a constitution in the standard template, every inferred rule suffixed ' (inferred — confirm)'.",
+      ),
+  }),
+  specDir: z.object({
+    source: z.enum(["found", "proposed"]),
+    path: z
+      .string()
+      .describe('Where the spec pack will be written, e.g. "specs".'),
+  }),
+  existingSpecs: z
+    .array(
+      z.object({
+        path: z.string(),
+        title: z.string(),
+        summary: z.string(),
+      }),
+    )
+    .describe("Existing spec files found in the repo. Empty if none."),
+});
+
+export type RepoScanOut = z.infer<typeof RepoScanSchema>;

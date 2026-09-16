@@ -7,10 +7,12 @@ export function RepoPanel({
   owner,
   repo,
   scan,
+  onDisconnect,
 }: {
   owner: string;
   repo: string;
   scan: RepoScan;
+  onDisconnect?: () => void;
 }) {
   const [open, setOpen] = useState(false);
   const constitutionLine =
@@ -27,12 +29,22 @@ export function RepoPanel({
             {owner}/{repo}
           </span>
         </p>
-        <button
-          onClick={() => setOpen((o) => !o)}
-          className="shrink-0 text-[13px] text-accent underline-offset-4 hover:underline"
-        >
-          {open ? "Hide" : "Inspect"}
-        </button>
+        <span className="flex shrink-0 items-baseline gap-3">
+          <button
+            onClick={() => setOpen((o) => !o)}
+            className="text-[13px] text-accent underline-offset-4 hover:underline"
+          >
+            {open ? "Hide" : "Inspect"}
+          </button>
+          {onDisconnect && (
+            <button
+              onClick={onDisconnect}
+              className="text-[13px] text-secondary underline-offset-4 hover:underline hover:text-warning"
+            >
+              Disconnect
+            </button>
+          )}
+        </span>
       </div>
       {scan.stack.length > 0 && (
         <p className="mt-1 text-[13px] text-secondary">{scan.stack.join(" · ")}</p>

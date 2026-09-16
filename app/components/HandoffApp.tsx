@@ -8,6 +8,7 @@ import { ReadinessStep } from "./ReadinessStep";
 import { SpecPackStep } from "./SpecPackStep";
 import { HistoryList } from "./HistoryList";
 import { RepoPanel } from "./RepoPanel";
+import { RepoConnect } from "./RepoConnect";
 import { StepHeading, StepSummary } from "./ui";
 import {
   deleteEntry,
@@ -191,13 +192,18 @@ export function HandoffApp() {
         onEdit={() => setStep("feature")}
       />
 
-      {session.repo && (
+      {session.repo ? (
         <RepoPanel
           owner={session.repo.owner}
           repo={session.repo.repo}
           scan={session.repo.scan}
+          onDisconnect={
+            step === "feature" ? () => update({ repo: undefined }) : undefined
+          }
         />
-      )}
+      ) : step === "feature" ? (
+        <RepoConnect />
+      ) : null}
 
       {step === "feature" && (
         <HistoryList

@@ -27,6 +27,23 @@ async function postJson<T>(url: string, body: unknown): Promise<T> {
   return data as T;
 }
 
+export type RepoConnectResult = {
+  owner: string;
+  repo: string;
+  defaultBranch: string;
+  scan: RepoScan;
+};
+
+// owner/repo + optional token → a scan. The token is sent once for this call;
+// the caller keeps it in memory for later per-request use, never persisted.
+export function scanRepo(
+  owner: string,
+  repo: string,
+  token: string,
+): Promise<RepoConnectResult> {
+  return postJson<RepoConnectResult>("/api/repo/scan", { owner, repo, token });
+}
+
 export async function fetchReadiness(
   feature: { title: string; text: string },
   repoScan?: RepoScan,
