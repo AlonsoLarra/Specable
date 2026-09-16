@@ -2,7 +2,12 @@
 
 import { useState } from "react";
 import { useSession } from "@/lib/session";
-import { parseFeatureText, sampleFeatureText } from "@/lib/feature";
+import {
+  corderoFeatureText,
+  parseFeatureText,
+  sampleFeatureText,
+} from "@/lib/feature";
+import { CORDERO_REPO_SCAN } from "@/lib/fixtures";
 import { Button, StepHeading, StepSummary } from "./ui";
 
 const PLACEHOLDER = `Title: Broker claim status portal
@@ -60,14 +65,37 @@ export function FeatureStep({
         className="mt-5 h-72 w-full resize-y rounded-lg border border-hairline bg-white p-4 text-[15px] leading-relaxed text-foreground placeholder:text-secondary/70 focus:border-accent focus:outline-none"
       />
 
-      <div className="mt-2 flex items-center justify-between text-[13px] text-secondary">
-        <span>Paste a Feature, or try the sample.</span>
-        <button
-          onClick={() => setDraft(sampleFeatureText())}
-          className="text-accent underline-offset-4 hover:underline"
-        >
-          Try the sample
-        </button>
+      <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-[13px] text-secondary">
+        <span>Paste a Feature, or try an example.</span>
+        <span className="flex items-center gap-4">
+          <button
+            onClick={() => {
+              setDraft(sampleFeatureText());
+              update({ repo: undefined });
+            }}
+            className="text-accent underline-offset-4 hover:underline"
+          >
+            Vague sample
+          </button>
+          <button
+            onClick={() => {
+              setDraft(corderoFeatureText());
+              // Connect the CorderoCoffee repo so the spec pack is repo-informed.
+              update({
+                repo: {
+                  owner: "AlonsoLarra",
+                  repo: "CorderoCoffee",
+                  defaultBranch: "main",
+                  token: "",
+                  scan: CORDERO_REPO_SCAN,
+                },
+              });
+            }}
+            className="text-accent underline-offset-4 hover:underline"
+          >
+            CorderoCoffee + repo
+          </button>
+        </span>
       </div>
 
       <div className="mt-6">

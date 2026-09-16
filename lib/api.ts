@@ -1,5 +1,5 @@
 import type { Answer, ReadinessReport, RepoScan, SpecPack } from "./types";
-import { DEMO_READINESS, DEMO_SLUG, DEMO_SPEC_PACK } from "./fixtures";
+import { pickDemo } from "./fixtures";
 
 const delay = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
@@ -29,7 +29,7 @@ export async function fetchReadiness(
   // delay keeps the loading state visible so the demo reads as real work.
   if (demo) {
     await delay(1200);
-    return DEMO_READINESS;
+    return pickDemo(feature).readiness;
   }
   return postJson<ReadinessReport>("/api/readiness", { feature, repoScan });
 }
@@ -54,12 +54,13 @@ export async function streamSpecPack(
 ): Promise<void> {
   // Demo mode: replay a pre-captured pack with simulated streaming progress.
   if (demo) {
-    const total = DEMO_SPEC_PACK.files.reduce((n, f) => n + f.content.length, 0);
+    const sc = pickDemo(body.feature);
+    const total = sc.specPack.files.reduce((n, f) => n + f.content.length, 0);
     for (let i = 1; i <= 6; i++) {
       await delay(300);
       handlers.onProgress?.(Math.round((total * i) / 6));
     }
-    handlers.onDone(DEMO_SPEC_PACK, DEMO_SLUG);
+    handlers.onDone(sc.specPack, sc.slug);
     return;
   }
 

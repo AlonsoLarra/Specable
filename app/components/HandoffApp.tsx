@@ -6,7 +6,16 @@ import { fetchReadiness, streamSpecPack } from "@/lib/api";
 import { FeatureStep } from "./FeatureStep";
 import { ReadinessStep } from "./ReadinessStep";
 import { SpecPackStep } from "./SpecPackStep";
+import { HistoryList } from "./HistoryList";
+import { RepoPanel } from "./RepoPanel";
 import { StepHeading, StepSummary } from "./ui";
+import {
+  deleteEntry,
+  loadHistory,
+  makeId,
+  saveEntry,
+  type HistoryEntry,
+} from "@/lib/history";
 
 const VERDICT_TEXT: Record<string, string> = {
   ready: "ready to hand off",
@@ -27,6 +36,11 @@ export function HandoffApp() {
   const [specProgress, setSpecProgress] = useState(0);
   const [specSlug, setSpecSlug] = useState("feature");
   const [demoMode, setDemoMode] = useState(false);
+  const [history, setHistory] = useState<HistoryEntry[]>([]);
+
+  useEffect(() => {
+    setHistory(loadHistory());
+  }, []);
 
   // Demo mode is a per-viewer convenience — persist it in localStorage.
   useEffect(() => {
@@ -108,6 +122,23 @@ export function HandoffApp() {
           update({ specPack, export: { mode: "files" } });
           setSpecSlug(slug);
           setSpecLoading(false);
+          // Record the conversion so it can be reopened without re-analysis.
+          setHistory(
+            saveEntry({
+              id: makeId(),
+              title: feature.title || "Untitled feature",
+              createdAt: new Date().toISOString(),
+              slug,
+              repoLabel: session.repo
+                ? `${session.repo.owner}/${session.repo.repo}`
+                : undefined,
+              feature,
+              readiness: session.readiness,
+              answers: session.answers,
+              specPack,
+              repo: session.repo,
+            }),
+          );
         },
         onError: (message) => {
           setSpecError(message);
@@ -116,6 +147,22 @@ export function HandoffApp() {
       },
       demoMode,
     );
+  }
+
+  function openEntry(e: HistoryEntry) {
+    update((s) => ({
+      ...s,
+      feature: e.feature,
+      readiness: e.readiness,
+      answers: e.answers,
+      specPack: e.specPack,
+      repo: e.repo,
+      featureRevised: undefined,
+    }));
+    setSpecSlug(e.slug);
+    setSpecError(null);
+    setSpecLoading(false);
+    setStep("specpack");
   }
 
   const hasProgress = step !== "feature" || session.feature.text.length > 0;
@@ -141,6 +188,22 @@ export function HandoffApp() {
         onSubmit={runReadiness}
         onEdit={() => setStep("feature")}
       />
+
+      {session.repo && (
+        <RepoPanel
+          owner={session.repo.owner}
+          repo={session.repo.repo}
+          scan={session.repo.scan}
+        />
+      )}
+
+      {step === "feature" && (
+        <HistoryList
+          entries={history}
+          onOpen={openEntry}
+          onDelete={(id) => setHistory(deleteEntry(id))}
+        />
+      )}
 
       {step === "readiness" && (
         <>

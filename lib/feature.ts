@@ -1,4 +1,4 @@
-import { SAMPLE_FEATURE } from "./sample";
+import { SAMPLE_CORDERO, SAMPLE_FEATURE } from "./sample";
 
 // The Feature is pasted into a single textarea (brief §2.1). Pull a leading
 // "Title:" line out if present; otherwise leave the title empty and let
@@ -17,4 +17,8 @@ export function parseFeatureText(raw: string): { title: string; text: string } {
 // The single-textarea form of the seeded sample, title line included.
 export function sampleFeatureText(): string {
   return `Title: ${SAMPLE_FEATURE.title}\n\n${SAMPLE_FEATURE.text}`;
+}
+
+export function corderoFeatureText(): string {
+  return `Title: ${SAMPLE_CORDERO.title}\n\n${SAMPLE_CORDERO.text}`;
 }
