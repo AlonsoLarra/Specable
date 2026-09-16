@@ -18,8 +18,8 @@ Specable turns a feature written for humans into a spec pack a coding agent can 
 ## Run locally (60 seconds)
 
 ```bash
-git clone https://github.com/AlonsoLarra/Handoff.git specable
-cd specable
+git clone https://github.com/AlonsoLarra/Specable.git
+cd Specable
 npm install
 cp .env.example .env.local   # then add your ANTHROPIC_API_KEY
 npm run dev                   # http://localhost:3000

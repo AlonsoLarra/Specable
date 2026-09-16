@@ -30,16 +30,21 @@ export function StepSummary({
   label,
   value,
   onEdit,
+  leading,
 }: {
   label: string;
   value: string;
   onEdit?: () => void;
+  leading?: ReactNode;
 }) {
   return (
     <div className="flex items-baseline justify-between gap-4 border-b border-hairline py-4">
-      <p className="min-w-0 truncate text-[15px]">
-        <span className="text-secondary">{label}</span>{" "}
-        <span className="text-foreground">{value}</span>
+      <p className="flex min-w-0 items-baseline gap-2 truncate text-[15px]">
+        {leading}
+        <span className="truncate">
+          <span className="text-secondary">{label}</span>{" "}
+          <span className="text-foreground">{value}</span>
+        </span>
       </p>
       {onEdit && (
         <button
@@ -57,17 +62,61 @@ export function StepHeading({ children }: { children: ReactNode }) {
   return <h2 className="text-[18px] font-medium tracking-tight">{children}</h2>;
 }
 
-// A 4px hairline that fills in the accent color — the whole of the "chart" (§8).
-export function ScoreBar({ label, value }: { label: string; value: number }) {
+// Traffic-light tiers for a readiness score (0–39 red, 40–79 yellow, 80–100 green).
+export type ScoreTier = "red" | "yellow" | "green";
+export function scoreTier(n: number): ScoreTier {
+  if (n >= 80) return "green";
+  if (n >= 40) return "yellow";
+  return "red";
+}
+const TIER_BG: Record<ScoreTier, string> = {
+  red: "bg-score-red",
+  yellow: "bg-score-yellow",
+  green: "bg-score-green",
+};
+const TIER_TEXT: Record<ScoreTier, string> = {
+  red: "text-score-red",
+  yellow: "text-score-yellow",
+  green: "text-score-green",
+};
+export function tierTextClass(n: number): string {
+  return TIER_TEXT[scoreTier(n)];
+}
+
+// A small filled dot in the tier color — the red/yellow/green indicator.
+export function ScoreDot({
+  value,
+  className = "",
+}: {
+  value: number;
+  className?: string;
+}) {
+  return (
+    <span
+      aria-hidden
+      className={`inline-block h-2.5 w-2.5 rounded-full ${TIER_BG[scoreTier(value)]} ${className}`}
+    />
+  );
+}
+
+// A 4px hairline that fills in — accent by default, or the score's tier color
+// when colorByTier is set (§8's "chart", now traffic-lit for readiness).
+export function ScoreBar({
+  label,
+  value,
+  colorByTier = false,
+}: {
+  label: string;
+  value: number;
+  colorByTier?: boolean;
+}) {
   const v = Math.max(0, Math.min(100, Math.round(value)));
+  const fill = colorByTier ? TIER_BG[scoreTier(v)] : "bg-accent";
   return (
     <div className="flex items-center gap-3">
       <span className="w-28 shrink-0 text-[13px] text-secondary">{label}</span>
       <div className="h-1 flex-1 rounded-full bg-hairline">
-        <div
-          className="h-1 rounded-full bg-accent"
-          style={{ width: `${v}%` }}
-        />
+        <div className={`h-1 rounded-full ${fill}`} style={{ width: `${v}%` }} />
       </div>
       <span className="w-7 shrink-0 text-right text-[13px] tabular-nums text-secondary">
         {v}

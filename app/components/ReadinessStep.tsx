@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { useSession } from "@/lib/session";
 import type { Gap, Owner, Pillar, ReadinessReport, Severity } from "@/lib/types";
-import { Button, ScoreBar, StepHeading, Tag } from "./ui";
+import { Button, ScoreBar, ScoreDot, StepHeading, Tag, tierTextClass } from "./ui";
 
 const PILLAR_LABEL: Record<Pillar, string> = {
   intent: "Intent",
@@ -156,23 +156,26 @@ export function ReadinessStep({
       <StepHeading>Readiness</StepHeading>
 
       <div className="mt-5 space-y-2">
-        <ScoreBar label="Intent" value={report.scores.intent} />
-        <ScoreBar label="Specification" value={report.scores.specification} />
-        <ScoreBar label="Context" value={report.scores.context} />
+        <ScoreBar label="Intent" value={report.scores.intent} colorByTier />
+        <ScoreBar
+          label="Specification"
+          value={report.scores.specification}
+          colorByTier
+        />
+        <ScoreBar label="Context" value={report.scores.context} colorByTier />
         <div className="pt-1">
-          <ScoreBar label="Overall" value={report.scores.overall} />
+          <ScoreBar label="Overall" value={report.scores.overall} colorByTier />
         </div>
       </div>
 
-      <p className="mt-5 text-[15px]">
-        <span
-          className={
-            report.verdict === "ready" ? "text-accent" : "text-warning"
-          }
-        >
-          {VERDICT_LABEL[report.verdict]}.
-        </span>{" "}
-        <span className="text-secondary">{report.summary}</span>
+      <p className="mt-5 flex items-baseline gap-2 text-[15px]">
+        <ScoreDot value={report.scores.overall} className="translate-y-[1px]" />
+        <span>
+          <span className={tierTextClass(report.scores.overall)}>
+            {VERDICT_LABEL[report.verdict]}.
+          </span>{" "}
+          <span className="text-secondary">{report.summary}</span>
+        </span>
       </p>
 
       <div className="mt-8">

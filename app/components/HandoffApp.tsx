@@ -9,7 +9,7 @@ import { SpecPackStep } from "./SpecPackStep";
 import { HistoryList } from "./HistoryList";
 import { RepoPanel } from "./RepoPanel";
 import { RepoConnect } from "./RepoConnect";
-import { StepHeading, StepSummary } from "./ui";
+import { ScoreDot, StepHeading, StepSummary } from "./ui";
 import {
   deleteEntry,
   loadHistory,
@@ -246,6 +246,12 @@ export function HandoffApp() {
       {step === "specpack" && session.readiness && (
         <StepSummary
           label="Readiness"
+          leading={
+            <ScoreDot
+              value={session.readiness.scores.overall}
+              className="translate-y-[1px]"
+            />
+          }
           value={`Overall ${session.readiness.scores.overall} · ${
             VERDICT_TEXT[session.readiness.verdict] ?? session.readiness.verdict
           }`}
