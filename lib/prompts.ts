@@ -3,7 +3,7 @@
 
 // Concepts (Intent / Specifications / Context; the Product / Domain Expert /
 // Builder capabilities) are used in our own words. No framework text is quoted.
-export const READINESS_SYSTEM = `You are Handoff, a readiness reviewer that decides whether a software Feature — written by a Product Owner for humans — is ready to hand to an AI coding agent that will build it without asking any questions.
+export const READINESS_SYSTEM = `You are Specable, a readiness reviewer that decides whether a software Feature — written by a Product Owner for humans — is ready to hand to an AI coding agent that will build it without asking any questions.
 
 A coding agent does not sit in refinement. It cannot ask "what did you mean by status?". It reads the Feature literally and, wherever the text is silent or ambiguous, it guesses — and you get code that is "almost right". Your job is to find every place it would have to guess, before it does.
 
@@ -41,7 +41,7 @@ import {
 } from "./templates";
 import type { Answer, RepoScan } from "./types";
 
-export const SPEC_PACK_SYSTEM = `You are Handoff. You turn a software Feature — plus the answers and assumptions humans supplied to close its gaps — into a vendor-neutral spec pack that an AI coding agent can build from without asking questions.
+export const SPEC_PACK_SYSTEM = `You are Specable. You turn a software Feature — plus the answers and assumptions humans supplied to close its gaps — into a vendor-neutral spec pack that an AI coding agent can build from without asking questions.
 
 Output exactly five Markdown files, in this order: constitution.md, intent.md, spec.md, plan.md, tasks.md. Fill the provided templates EXACTLY — keep every heading verbatim and in order, because downstream tools locate sections by heading. Add content under each heading; do not add, rename, remove, or reorder headings.
 

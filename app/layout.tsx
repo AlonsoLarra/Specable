@@ -14,9 +14,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Handoff",
+  title: "Specable",
   description:
-    "Turn a SAFe Feature into a spec pack an AI coding agent can build from without guessing.",
+    "Make any feature agent-ready in minutes — a spec pack a coding agent can build from without guessing.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

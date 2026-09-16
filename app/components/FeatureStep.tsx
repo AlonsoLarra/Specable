@@ -53,7 +53,7 @@ export function FeatureStep({
     <section className="py-8">
       <StepHeading>Feature</StepHeading>
       <p className="mt-2 text-[15px] text-secondary">
-        Paste a Feature the way a Product Owner wrote it. Handoff reads it the
+        Paste a Feature the way a Product Owner wrote it. Specable reads it the
         way a coding agent would.
       </p>
 
